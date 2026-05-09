@@ -1,3 +1,4 @@
+```yaml
 name: "Spotify & SoundCloud Downloader"
 
 on:
@@ -66,12 +67,21 @@ jobs:
         shell: bash
         run: |
           sudo apt-get update -qq
-          sudo apt-get install -y docker.io ffmpeg curl zip jq python3 python3-pip
+
+          sudo apt-get install -y \
+            ffmpeg \
+            curl \
+            zip \
+            jq \
+            python3 \
+            python3-pip
 
           pip3 install --quiet yt-dlp
 
       - name: Create Download Folder
-        run: mkdir -p release_files
+        shell: bash
+        run: |
+          mkdir -p release_files
 
       - name: Start Downtify
         if: contains(github.event.inputs.media_url, 'spotify.com')
@@ -82,8 +92,8 @@ jobs:
             -p 8000:8000 \
             ghcr.io/henriquesebastiao/downtify:latest
 
-          echo "Waiting for Downtify..."
-          sleep 25
+          echo "Waiting for Downtify to start..."
+          sleep 30
 
       - name: Download Spotify Media
         if: contains(github.event.inputs.media_url, 'spotify.com')
@@ -93,14 +103,13 @@ jobs:
 
           echo "Spotify detected"
 
-          RESPONSE=$(curl -s -X POST \
+          curl -X POST \
             -H "Content-Type: application/json" \
             -d "{\"url\":\"$URL\"}" \
-            http://localhost:8000/api/download)
+            http://localhost:8000/api/download
 
-          echo "$RESPONSE"
-
-          sleep 20
+          echo "Waiting for download..."
+          sleep 30
 
           find . -type f \( -iname "*.mp3" -o -iname "*.flac" \) -exec mv {} release_files/ \;
 
@@ -213,3 +222,4 @@ jobs:
         run: |
           docker rm -f downtify 2>/dev/null || true
           rm -rf release_files
+```
